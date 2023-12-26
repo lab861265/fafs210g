@@ -1,0 +1,165 @@
+Subject: [PATCH] Gold Edition 2.1.0 - Target Download
+---
+Index: facefusion/uis/typing.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/typing.py b/facefusion/uis/typing.py
+--- a/facefusion/uis/typing.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/uis/typing.py	(date 1702680514776)
+@@ -8,6 +8,7 @@
+ 	'source_image',
+ 	'target_image',
+ 	'target_video',
++	'target_file',
+ 	'preview_frame_slider',
+ 	'face_selector_mode_dropdown',
+ 	'reference_face_position_gallery',
+Index: facefusion/uis/components/target_options.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/components/target_options.py b/facefusion/uis/components/target_options.py
+new file mode 100644
+--- /dev/null	(date 1702680625444)
++++ b/facefusion/uis/components/target_options.py	(date 1702680625444)
+@@ -0,0 +1,51 @@
++import os
++import shutil
++from typing import Optional, Tuple
++import gradio
++import yt_dlp
++
++from facefusion import wording
++from facefusion.uis.core import get_ui_component
++from facefusion.filesystem import get_temp_directory_path, is_directory, create_temp
++
++TARGET_URL_TEXTBOX : Optional[gradio.Textbox] = None
++DOWNLOAD_BUTTON : Optional[gradio.Button] = None
++
++
++def render() -> None:
++	global TARGET_URL_TEXTBOX
++	global DOWNLOAD_BUTTON
++
++	TARGET_URL_TEXTBOX = gradio.Textbox(
++		label = wording.get('target_url_textbox_label'),
++		max_lines = 1
++	)
++	DOWNLOAD_BUTTON = gradio.Button(
++		value = wording.get('download_button_label'),
++		size = 'sm'
++	)
++
++
++def listen() -> None:
++	target_file = get_ui_component('target_file')
++	preview_frame_slider = get_ui_component('preview_frame_slider')
++	if target_file and preview_frame_slider:
++		DOWNLOAD_BUTTON.click(download, inputs = TARGET_URL_TEXTBOX, outputs = [ target_file, preview_frame_slider ])
++
++
++def download(target_url : str) -> Tuple[gradio.File, gradio.Slider]:
++	temp_directory_path = get_temp_directory_path('target_download.mp4')
++	temp_file_path = os.path.join(temp_directory_path, 'target_download.mp4')
++	if is_directory(temp_directory_path):
++		shutil.rmtree(temp_directory_path)
++	create_temp('target_download.mp4')
++
++	ydl_options =\
++	{
++		'outtmpl': temp_file_path,
++		'format': 'mp4'
++	}
++	with yt_dlp.YoutubeDL(ydl_options) as ydl:
++		ydl.download(target_url)
++	return gradio.File(value = temp_file_path), gradio.Slider(value = 0)
++
+Index: facefusion/wording.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/wording.py b/facefusion/wording.py
+--- a/facefusion/wording.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/wording.py	(date 1702680514776)
+@@ -73,6 +73,7 @@
+ 	'ui_layout_not_implemented': 'UI layout {ui_layout} not implemented correctly',
+ 	'stream_not_loaded': 'Stream {stream_mode} could not be loaded',
+ 	'donate_button_label': 'DONATE',
++	'download_button_label': 'DOWNLOAD',
+ 	'start_button_label': 'START',
+ 	'stop_button_label': 'STOP',
+ 	'clear_button_label': 'CLEAR',
+@@ -120,6 +121,7 @@
+ 	'trim_frame_end_slider_label': 'TRIM FRAME END',
+ 	'source_file_label': 'SOURCE',
+ 	'target_file_label': 'TARGET',
++	'target_url_textbox_label': 'TARGET URL',
+ 	'webcam_image_label': 'WEBCAM',
+ 	'webcam_mode_radio_label': 'WEBCAM MODE',
+ 	'webcam_resolution_dropdown': 'WEBCAM RESOLUTION',
+Index: requirements.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/requirements.txt b/requirements.txt
+--- a/requirements.txt	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/requirements.txt	(date 1702680514776)
+@@ -9,3 +9,4 @@
+ realesrgan==0.3.0
+ torch==2.1.1
+ tqdm==4.66.1
++yt_dlp==2023.10.7
+Index: facefusion/uis/components/target.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/components/target.py b/facefusion/uis/components/target.py
+--- a/facefusion/uis/components/target.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/uis/components/target.py	(date 1702680514776)
+@@ -42,6 +42,7 @@
+ 		visible = is_target_video,
+ 		show_label = False
+ 	)
++	register_ui_component('target_file', TARGET_FILE)
+ 	register_ui_component('target_image', TARGET_IMAGE)
+ 	register_ui_component('target_video', TARGET_VIDEO)
+ 
+Index: facefusion/uis/layouts/default.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/layouts/default.py b/facefusion/uis/layouts/default.py
+--- a/facefusion/uis/layouts/default.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/uis/layouts/default.py	(date 1702680555346)
+@@ -1,6 +1,7 @@
+ import gradio
+ 
+ from facefusion.uis.components import about, frame_processors, frame_processors_options, execution, execution_thread_count, execution_queue_count, limit_resources, temp_frame, output_options, common_options, source, target, output, preview, trim_frame, face_analyser, face_selector, face_masker
++from facefusion.uis.components import target_options
+ 
+ 
+ def pre_check() -> bool:
+@@ -38,6 +39,8 @@
+ 				with gradio.Blocks():
+ 					target.render()
+ 				with gradio.Blocks():
++					target_options.render()
++				with gradio.Blocks():
+ 					output.render()
+ 			with gradio.Column(scale = 3):
+ 				with gradio.Blocks():
+@@ -65,6 +68,7 @@
+ 	common_options.listen()
+ 	source.listen()
+ 	target.listen()
++	target_options.listen()
+ 	output.listen()
+ 	preview.listen()
+ 	trim_frame.listen()

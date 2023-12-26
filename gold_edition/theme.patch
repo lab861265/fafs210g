@@ -1,0 +1,68 @@
+Subject: [PATCH] Gold Edition 2.1.0 - Theme
+---
+Index: facefusion/metadata.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/metadata.py b/facefusion/metadata.py
+--- a/facefusion/metadata.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/metadata.py	(date 1702680789075)
+@@ -7,6 +7,7 @@
+ 	'author': 'Henry Ruhs',
+ 	'url': 'https://facefusion.io'
+ }
++METADATA['version'] = METADATA['version'] + ' Gold Edition'
+ 
+ 
+ def get(key : str) -> str:
+Index: facefusion/uis/components/about.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/components/about.py b/facefusion/uis/components/about.py
+--- a/facefusion/uis/components/about.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/uis/components/about.py	(date 1702680789071)
+@@ -1,23 +1,16 @@
+ from typing import Optional
+ import gradio
+ 
+-from facefusion import metadata, wording
++from facefusion import metadata
+ 
+ ABOUT_BUTTON : Optional[gradio.HTML] = None
+-DONATE_BUTTON : Optional[gradio.HTML] = None
+ 
+ 
+ def render() -> None:
+ 	global ABOUT_BUTTON
+-	global DONATE_BUTTON
+ 
+ 	ABOUT_BUTTON = gradio.Button(
+ 		value = metadata.get('name') + ' ' + metadata.get('version'),
+ 		variant = 'primary',
+ 		link = metadata.get('url')
+ 	)
+-	DONATE_BUTTON = gradio.Button(
+-		value = wording.get('donate_button_label'),
+-		link = 'https://donate.facefusion.io',
+-		size = 'sm'
+-	)
+Index: facefusion/uis/core.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/core.py b/facefusion/uis/core.py
+--- a/facefusion/uis/core.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/uis/core.py	(date 1702680789075)
+@@ -70,7 +70,7 @@
+ 
+ def get_theme() -> gradio.Theme:
+ 	return gradio.themes.Base(
+-		primary_hue = gradio.themes.colors.red,
++		primary_hue = gradio.themes.colors.orange,
+ 		secondary_hue = gradio.themes.colors.neutral,
+ 		font = gradio.themes.GoogleFont('Open Sans')
+ 	).set(

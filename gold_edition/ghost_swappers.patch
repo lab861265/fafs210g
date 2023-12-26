@@ -1,0 +1,179 @@
+Subject: [PATCH] Gold Edition 2.1.0 - Ghost Swappers
+---
+Index: facefusion/face_analyser.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/face_analyser.py b/facefusion/face_analyser.py
+--- a/facefusion/face_analyser.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/face_analyser.py	(date 1702680176597)
+@@ -32,6 +32,11 @@
+ 		'url': 'https://github.com/facefusion/facefusion-assets/releases/download/models/arcface_w600k_r50.onnx',
+ 		'path': resolve_relative_path('../.assets/models/arcface_w600k_r50.onnx')
+ 	},
++	'face_recognizer_arcface_ghost':
++	{
++		'url': 'https://github.com/harisreedhar/Face-Swappers-ONNX/releases/download/ghost/ghost_arcface_backbone.onnx',
++		'path': resolve_relative_path('../.assets/models/ghost_arcface_backbone.onnx')
++	},
+ 	'face_recognizer_arcface_inswapper':
+ 	{
+ 		'url': 'https://github.com/facefusion/facefusion-assets/releases/download/models/arcface_w600k_r50.onnx',
+@@ -61,6 +66,8 @@
+ 				face_detector = cv2.FaceDetectorYN.create(MODELS.get('face_detector_yunet').get('path'), '', (0, 0))
+ 			if facefusion.globals.face_recognizer_model == 'arcface_blendswap':
+ 				face_recognizer = onnxruntime.InferenceSession(MODELS.get('face_recognizer_arcface_blendswap').get('path'), providers = facefusion.globals.execution_providers)
++			if facefusion.globals.face_recognizer_model == 'arcface_ghost':
++				face_recognizer = onnxruntime.InferenceSession(MODELS.get('face_recognizer_arcface_ghost').get('path'), providers = facefusion.globals.execution_providers)
+ 			if facefusion.globals.face_recognizer_model == 'arcface_inswapper':
+ 				face_recognizer = onnxruntime.InferenceSession(MODELS.get('face_recognizer_arcface_inswapper').get('path'), providers = facefusion.globals.execution_providers)
+ 			if facefusion.globals.face_recognizer_model == 'arcface_simswap':
+@@ -88,6 +95,7 @@
+ 		[
+ 			MODELS.get('face_detector_retinaface').get('url'),
+ 			MODELS.get('face_detector_yunet').get('url'),
++			MODELS.get('face_recognizer_arcface_ghost').get('url'),
+ 			MODELS.get('face_recognizer_arcface_inswapper').get('url'),
+ 			MODELS.get('face_recognizer_arcface_simswap').get('url'),
+ 			MODELS.get('gender_age').get('url')
+Index: facefusion/processors/frame/modules/face_swapper.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/processors/frame/modules/face_swapper.py b/facefusion/processors/frame/modules/face_swapper.py
+--- a/facefusion/processors/frame/modules/face_swapper.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/processors/frame/modules/face_swapper.py	(date 1702680304015)
+@@ -37,6 +37,39 @@
+ 		'mean': [ 0.0, 0.0, 0.0 ],
+ 		'standard_deviation': [ 1.0, 1.0, 1.0 ]
+ 	},
++	'ghost_unet_1_block':
++	{
++		'type': 'ghost',
++		'url': 'https://github.com/harisreedhar/Face-Swappers-ONNX/releases/download/ghost/ghost_unet_1_block.onnx',
++		'path': resolve_relative_path('../.assets/models/ghost_unet_1_block.onnx'),
++		'name': 'ghost',
++		'template': 'arcface_112_v1',
++		'size': (112, 256),
++		'mean': [ 0.0, 0.0, 0.0 ],
++		'standard_deviation': [ 1.0, 1.0, 1.0 ]
++	},
++	'ghost_unet_2_block':
++	{
++		'type': 'ghost',
++		'url': 'https://github.com/harisreedhar/Face-Swappers-ONNX/releases/download/ghost/ghost_unet_2_block.onnx',
++		'path': resolve_relative_path('../.assets/models/ghost_unet_2_block.onnx'),
++		'name': 'ghost',
++		'template': 'arcface_112_v1',
++		'size': (112, 256),
++		'mean': [ 0.0, 0.0, 0.0 ],
++		'standard_deviation': [ 1.0, 1.0, 1.0 ]
++	},
++	'ghost_unet_3_block':
++	{
++		'type': 'ghost',
++		'url': 'https://github.com/harisreedhar/Face-Swappers-ONNX/releases/download/ghost/ghost_unet_3_block.onnx',
++		'path': resolve_relative_path('../.assets/models/ghost_unet_3_block.onnx'),
++		'name': 'ghost',
++		'template': 'arcface_112_v1',
++		'size': (112, 256),
++		'mean': [ 0.0, 0.0, 0.0 ],
++		'standard_deviation': [ 1.0, 1.0, 1.0 ]
++	},
+ 	'inswapper_128':
+ 	{
+ 		'type': 'inswapper',
+@@ -140,6 +173,8 @@
+ 	frame_processors_globals.face_swapper_model = args.face_swapper_model
+ 	if args.face_swapper_model == 'blendswap_256':
+ 		facefusion.globals.face_recognizer_model = 'arcface_blendswap'
++	if args.face_swapper_model == 'ghost_unet_1_block' or args.face_swapper_model == 'ghost_unet_2_block' or args.face_swapper_model == 'ghost_unet_3_block':
++		facefusion.globals.face_recognizer_model = 'arcface_ghost'
+ 	if args.face_swapper_model == 'inswapper_128' or args.face_swapper_model == 'inswapper_128_fp16':
+ 		facefusion.globals.face_recognizer_model = 'arcface_inswapper'
+ 	if args.face_swapper_model == 'simswap_256' or args.face_swapper_model == 'simswap_512_unofficial':
+@@ -208,6 +243,8 @@
+ 				frame_processor_inputs[frame_processor_input.name] = prepare_source_frame(source_face)
+ 			else:
+ 				frame_processor_inputs[frame_processor_input.name] = prepare_source_embedding(source_face)
++		if frame_processor_input.name == 'source_embedding':
++			frame_processor_inputs[frame_processor_input.name] = prepare_source_embedding(source_face)
+ 		if frame_processor_input.name == 'target':
+ 			frame_processor_inputs[frame_processor_input.name] = crop_frame
+ 	crop_frame = frame_processor.run(None, frame_processor_inputs)[0][0]
+@@ -230,7 +267,9 @@
+ 
+ def prepare_source_embedding(source_face : Face) -> Embedding:
+ 	model_type = get_options('model').get('type')
+-	if model_type == 'inswapper':
++	if model_type == 'ghost':
++		source_embedding = source_face.embedding.reshape(1, -1)
++	elif model_type == 'inswapper':
+ 		model_matrix = get_model_matrix()
+ 		source_embedding = source_face.embedding.reshape((1, -1))
+ 		source_embedding = numpy.dot(source_embedding, model_matrix) / numpy.linalg.norm(source_embedding)
+@@ -240,9 +279,13 @@
+ 
+ 
+ def prepare_crop_frame(crop_frame : Frame) -> Frame:
++	model_type = get_options('model').get('type')
+ 	model_mean = get_options('model').get('mean')
+ 	model_standard_deviation = get_options('model').get('standard_deviation')
+-	crop_frame = crop_frame[:, :, ::-1] / 255.0
++	if model_type == 'ghost':
++		crop_frame = crop_frame[:, :, ::-1] / 127.5 - 1
++	else:
++		crop_frame = crop_frame[:, :, ::-1] / 255.0
+ 	crop_frame = (crop_frame - model_mean) / model_standard_deviation
+ 	crop_frame = crop_frame.transpose(2, 0, 1)
+ 	crop_frame = numpy.expand_dims(crop_frame, axis = 0).astype(numpy.float32)
+@@ -250,8 +293,12 @@
+ 
+ 
+ def normalize_crop_frame(crop_frame : Frame) -> Frame:
++	model_template = get_options('model').get('name')
+ 	crop_frame = crop_frame.transpose(1, 2, 0)
+-	crop_frame = (crop_frame * 255.0).round()
++	if model_template == 'ghost':
++		crop_frame = (crop_frame * 127.5 + 127.5).round()
++	else:
++		crop_frame = (crop_frame * 255.0).round()
+ 	crop_frame = crop_frame[:, :, ::-1].astype(numpy.uint8)
+ 	return crop_frame
+ 
+Index: facefusion/uis/components/frame_processors_options.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/components/frame_processors_options.py b/facefusion/uis/components/frame_processors_options.py
+--- a/facefusion/uis/components/frame_processors_options.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/uis/components/frame_processors_options.py	(date 1702680176593)
+@@ -89,6 +89,8 @@
+ 	frame_processors_globals.face_swapper_model = face_swapper_model
+ 	if face_swapper_model == 'blendswap_256':
+ 		facefusion.globals.face_recognizer_model = 'arcface_blendswap'
++	if face_swapper_model == 'ghost_unet_1_block' or face_swapper_model == 'ghost_unet_2_block' or face_swapper_model == 'ghost_unet_3_block':
++		facefusion.globals.face_recognizer_model = 'arcface_ghost'
+ 	if face_swapper_model == 'inswapper_128' or face_swapper_model == 'inswapper_128_fp16':
+ 		facefusion.globals.face_recognizer_model = 'arcface_inswapper'
+ 	if face_swapper_model == 'simswap_256' or face_swapper_model == 'simswap_512_unofficial':
+Index: facefusion/processors/frame/choices.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/processors/frame/choices.py b/facefusion/processors/frame/choices.py
+--- a/facefusion/processors/frame/choices.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/processors/frame/choices.py	(date 1702680176593)
+@@ -3,7 +3,7 @@
+ 
+ from facefusion.processors.frame.typings import FaceSwapperModel, FaceEnhancerModel, FrameEnhancerModel, FaceDebuggerItem
+ 
+-face_swapper_models : List[FaceSwapperModel] = [ 'blendswap_256', 'inswapper_128', 'inswapper_128_fp16', 'simswap_256', 'simswap_512_unofficial' ]
++face_swapper_models : List[FaceSwapperModel] = [ 'blendswap_256', 'ghost_unet_1_block', 'ghost_unet_2_block', 'ghost_unet_3_block', 'inswapper_128', 'inswapper_128_fp16', 'simswap_256', 'simswap_512_unofficial' ]
+ face_enhancer_models : List[FaceEnhancerModel] = [ 'codeformer', 'gfpgan_1.2', 'gfpgan_1.3', 'gfpgan_1.4', 'gpen_bfr_256', 'gpen_bfr_512', 'restoreformer' ]
+ frame_enhancer_models : List[FrameEnhancerModel] = [ 'real_esrgan_x2plus', 'real_esrgan_x4plus', 'real_esrnet_x4plus' ]
+ 

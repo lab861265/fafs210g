@@ -1,0 +1,43 @@
+Subject: [PATCH] Gold Edition 2.1.0 - HLS Webcam Mode
+---
+Index: facefusion/uis/choices.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/choices.py b/facefusion/uis/choices.py
+--- a/facefusion/uis/choices.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/uis/choices.py	(date 1702681300002)
+@@ -3,5 +3,5 @@
+ from facefusion.uis.typing import WebcamMode
+ 
+ common_options : List[str] = [ 'keep-fps', 'keep-temp', 'skip-audio', 'skip-download' ]
+-webcam_modes : List[WebcamMode] = [ 'inline', 'udp', 'v4l2' ]
++webcam_modes : List[WebcamMode] = [ 'inline', 'hls', 'udp', 'v4l2' ]
+ webcam_resolutions : List[str] = [ '320x240', '640x480', '800x600', '1024x768', '1280x720', '1280x960', '1920x1080', '2560x1440', '3840x2160' ]
+Index: facefusion/uis/components/webcam.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/facefusion/uis/components/webcam.py b/facefusion/uis/components/webcam.py
+--- a/facefusion/uis/components/webcam.py	(revision 30b6aabc5732cbbd7a58c3d8033664e4023e30d8)
++++ b/facefusion/uis/components/webcam.py	(date 1702681392329)
+@@ -85,7 +85,7 @@
+ 	source_frames = read_static_images(facefusion.globals.source_paths)
+ 	source_face = get_average_face(source_frames)
+ 	stream = None
+-	if webcam_mode in [ 'udp', 'v4l2' ]:
++	if webcam_mode in [ 'hls', 'udp', 'v4l2' ]:
+ 		stream = open_stream(webcam_mode, resolution, fps) # type: ignore[arg-type]
+ 	webcam_width, webcam_height = map(int, resolution.split('x'))
+ 	webcam_capture = get_webcam_capture()
+@@ -143,6 +143,8 @@
+ 
+ def open_stream(stream_mode : StreamMode, resolution : str, fps : float) -> subprocess.Popen[bytes]:
+ 	commands = [ '-f', 'rawvideo', '-pix_fmt', 'bgr24', '-s', resolution, '-r', str(fps), '-i', '-' ]
++	if stream_mode == 'hls':
++		commands.extend([ '-hls_time', '5', '-f', 'hls', 'stream.m3u8' ])
+ 	if stream_mode == 'udp':
+ 		commands.extend([ '-b:v', '2000k', '-f', 'mpegts', 'udp://localhost:27000?pkt_size=1316' ])
+ 	if stream_mode == 'v4l2':
